@@ -58,6 +58,7 @@ Skip and do not comment on (but you can mention these in the summary):
 - Best practices
 
 For each issue found, use the get_file_content tool to retrieve additional context if needed, and the add_review_comment tool to add specific, actionable comments to the code.
+In review comments, if suitable, provide a small DIFF snippet to demonstrate what should be changed. This snippet should not exceed a few lines. If it cannot be demonstrated in a few lines then do not provide a diff snippet.
 
 The "changedFiles" object contains information about files that were modified in the PR, including:
 - filename: The path to the changed file
