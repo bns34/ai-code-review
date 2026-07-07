@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AleksandrFurmenkovOfficial/ai-code-review.git"
+    "url": "git+https://github.com/bns34/ai-code-review.git"
   },
   "keywords": [
     "nodejs",
@@ -41,9 +41,9 @@
   "author": "Aleksandr Furmenkov",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/AleksandrFurmenkovOfficial/ai-code-review/issues"
+    "url": "https://github.com/bns34/ai-code-review/issues"
   },
-  "homepage": "https://github.com/AleksandrFurmenkovOfficial/ai-code-review#readme",
+  "homepage": "https://github.com/bns34/ai-code-review#readme",
   "dependencies": {
     "@actions/core": "^2.0.0",
     "@actions/github": "^6.0.0",
