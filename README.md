@@ -60,6 +60,8 @@ Perform code review using various AI models from OpenAI, Anthropic, Google, X, D
 
 ***review_rules_file*** - Optional. Path to a file in the repository containing custom review rules to be added to the AI system prompt.
 
+***bypass_incremental*** - Optional. Bypasses the incremental review, instead reviewing all the changes in the PR regardless of previous reviews.
+
 ## Usage Examples
 
 Create a new `.github/workflows/ai-code-review.yml` file in your GitHub repository. Below are examples for different AI providers:

@@ -80,6 +80,7 @@ class InputProcessor {
         this._apiKey = null;
         this._model = null;
         this._failAction = true;
+        this._bypassIncremental = null;
         this._githubAPI = null;
         this._baseCommit = null;
         this._headCommit = null;
@@ -113,6 +114,7 @@ class InputProcessor {
         this._apiKey = sanitizeString(core.getInput(`${this._aiProvider}_api_key`, { required: true, trimWhitespace: true }));
         this._model = sanitizeString(core.getInput(`${this._aiProvider}_model`, { required: true, trimWhitespace: true }));
         this._failAction = sanitizeBool(core.getInput("fail_action_if_review_failed"));
+        this._bypassIncremental = sanitizeBool(core.getInput("bypass_incremental"));
 
         this._includeExtensions = sanitizeString(core.getInput("include_extensions"));
         this._excludeExtensions = sanitizeString(core.getInput("exclude_extensions"));
@@ -172,23 +174,28 @@ class InputProcessor {
     }
 
     async _processChangedFiles() {
-        const comments = await this._githubAPI.listPRComments(this._owner, this._repo, this._pullNumber);
-        const lastReviewComment = [...comments].reverse().find(c => c.body && c.body.startsWith(AI_REVIEW_COMMENT_PREFIX));
 
-        if (lastReviewComment) {
-            core.info(`Found last review comment: ${lastReviewComment.body.split("\n")[0]}`);
-            const newBaseCommit = lastReviewComment.body
-                .split(SUMMARY_SEPARATOR)[0]
-                .replace(AI_REVIEW_COMMENT_PREFIX, "")
-                .split(" ")[0]
-                .trim();
+        if (!this._bypassIncremental) {
+            const comments = await this._githubAPI.listPRComments(this._owner, this._repo, this._pullNumber);
+            const lastReviewComment = [...comments].reverse().find(c => c.body && c.body.startsWith(AI_REVIEW_COMMENT_PREFIX));
 
-            if (newBaseCommit) {
-                core.info(`New base commit ${newBaseCommit}. Incremental review will be performed`);
-                this._baseCommit = newBaseCommit;
+            if (lastReviewComment) {
+                core.info(`Found last review comment: ${lastReviewComment.body.split("\n")[0]}`);
+                const newBaseCommit = lastReviewComment.body
+                    .split(SUMMARY_SEPARATOR)[0]
+                    .replace(AI_REVIEW_COMMENT_PREFIX, "")
+                    .split(" ")[0]
+                    .trim();
+
+                if (newBaseCommit) {
+                    core.info(`New base commit ${newBaseCommit}. Incremental review will be performed`);
+                    this._baseCommit = newBaseCommit;
+                }
+            } else {
+                core.info("No previous review comments found, reviewing all files in PR");
             }
         } else {
-            core.info("No previous review comments found, reviewing all files in PR");
+            core.info("Bypass incremental mode set. Reviewing all files in PR")
         }
 
         const changedFiles = await this._githubAPI.getFilesBetweenCommits(
