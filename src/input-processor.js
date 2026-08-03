@@ -10,7 +10,7 @@ const GoogleAgent = require("./google-agent");
 const DeepseekAgent = require("./deepseek-agent");
 const XAgent = require("./x-agent");
 const PerplexityAgent = require("./perplexity-agent");
-const { AI_REVIEW_COMMENT_PREFIX, SUMMARY_SEPARATOR } = require("./constants");
+const { AI_REVIEW_COMMENT_PREFIX, SUMMARY_SEPARATOR, FULL_REVIEW_PREFIX, INCREMENTAL_REVIEW_PREFIX } = require("./constants");
 
 /* -------------------------------------------------------------------------- */
 /*                               Sanitizers                                   */
@@ -66,6 +66,33 @@ function sanitizePath(value) {
     return normalized === "." ? "" : normalized;
 }
 
+/**
+ * Returns true if the comment body is an AI review comment.
+ * Matches full, incremental, and legacy (no qualifier) prefixes.
+ */
+function isReviewCommentBody(body) {
+    if (!body) {
+        return false;
+    }
+    return (
+        body.startsWith(FULL_REVIEW_PREFIX) ||
+        body.startsWith(INCREMENTAL_REVIEW_PREFIX) ||
+        body.startsWith(AI_REVIEW_COMMENT_PREFIX)
+    );
+}
+
+/**
+ * Extracts the base commit from an AI review comment body, stripping any
+ * recognized prefix variant (full, incremental, or legacy).
+ */
+function extractBaseCommitFromReviewComment(body) {
+    return body
+        .split(SUMMARY_SEPARATOR)[0]
+        .replace(/^.*commit: /, "")
+        .split(" ")[0]
+        .trim();
+}
+
 /* -------------------------------------------------------------------------- */
 /*                               InputProcessor                               */
 /* -------------------------------------------------------------------------- */
@@ -81,6 +108,7 @@ class InputProcessor {
         this._model = null;
         this._failAction = true;
         this._bypassIncremental = null;
+        this._isIncremental = false;
         this._githubAPI = null;
         this._baseCommit = null;
         this._headCommit = null;
@@ -177,19 +205,16 @@ class InputProcessor {
 
         if (!this._bypassIncremental) {
             const comments = await this._githubAPI.listPRComments(this._owner, this._repo, this._pullNumber);
-            const lastReviewComment = [...comments].reverse().find(c => c.body && c.body.startsWith(AI_REVIEW_COMMENT_PREFIX));
+            const lastReviewComment = [...comments].reverse().find(c => isReviewCommentBody(c.body));
 
             if (lastReviewComment) {
                 core.info(`Found last review comment: ${lastReviewComment.body.split("\n")[0]}`);
-                const newBaseCommit = lastReviewComment.body
-                    .split(SUMMARY_SEPARATOR)[0]
-                    .replace(AI_REVIEW_COMMENT_PREFIX, "")
-                    .split(" ")[0]
-                    .trim();
+                const newBaseCommit = extractBaseCommitFromReviewComment(lastReviewComment.body);
 
                 if (newBaseCommit) {
                     core.info(`New base commit ${newBaseCommit}. Incremental review will be performed`);
                     this._baseCommit = newBaseCommit;
+                    this._isIncremental = true;
                 }
             } else {
                 core.info("No previous review comments found, reviewing all files in PR");
@@ -308,6 +333,7 @@ class InputProcessor {
     get pullNumber() { return this._pullNumber; }
     get failAction() { return this._failAction; }
     get model() { return this._model; }
+    get isIncremental() { return this._isIncremental; }
 }
 
 module.exports = InputProcessor;

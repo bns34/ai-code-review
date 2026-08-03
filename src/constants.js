@@ -5,6 +5,10 @@
 // Comment prefix used to identify AI review comments
 const AI_REVIEW_COMMENT_PREFIX = "AI review done up to commit: ";
 
+// Prefix variants indicating whether the review was full or incremental
+const FULL_REVIEW_PREFIX = `Full ${AI_REVIEW_COMMENT_PREFIX}`;
+const INCREMENTAL_REVIEW_PREFIX = `Incremental ${AI_REVIEW_COMMENT_PREFIX}`;
+
 // Separator for the summary section in review comments
 const SUMMARY_SEPARATOR = "\n\n### AI Review Summary:\n";
 
@@ -22,6 +26,8 @@ const MAX_CACHE_ENTRIES = 1000;
 
 module.exports = {
     AI_REVIEW_COMMENT_PREFIX,
+    FULL_REVIEW_PREFIX,
+    INCREMENTAL_REVIEW_PREFIX,
     SUMMARY_SEPARATOR,
     MAX_REVIEW_ITERATIONS,
     MAX_FILE_SIZE_BYTES,
