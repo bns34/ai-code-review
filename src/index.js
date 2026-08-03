@@ -19,7 +19,7 @@ const main = async () => {
             throw new Error('AI Agent did not return a valid review summary');
         }
 
-        const commentBody = `${AI_REVIEW_COMMENT_PREFIX}${inputProcessor.headCommit}${SUMMARY_SEPARATOR}${reviewSummary}`;
+        const commentBody = `${AI_REVIEW_COMMENT_PREFIX}${inputProcessor.headCommit}${SUMMARY_SEPARATOR}${reviewSummary}\n\n**Model Used:** \`${inputProcessor.model}\``;
         await inputProcessor.githubAPI.createPRComment(
             inputProcessor.owner, 
             inputProcessor.repo, 

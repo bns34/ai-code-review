@@ -307,6 +307,7 @@ class InputProcessor {
     get owner() { return this._owner; }
     get pullNumber() { return this._pullNumber; }
     get failAction() { return this._failAction; }
+    get model() { return this._model; }
 }
 
 module.exports = InputProcessor;
