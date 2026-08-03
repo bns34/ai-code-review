@@ -194,7 +194,8 @@ class OpenAIAgent extends BaseAIAgent {
                             { role: "system", content: this.getSystemPrompt() },
                             ...reviewState.messageHistory
                         ],
-                        tools: this.tools
+                        tools: this.tools,
+                        reasoning_effort: null
                     });
                     message = followUp.choices[0].message; // continue loop
                     continue;
@@ -262,7 +263,8 @@ class OpenAIAgent extends BaseAIAgent {
                     { role: "system", content: this.getSystemPrompt() },
                     ...reviewState.messageHistory
                 ],
-                tools: this.tools
+                tools: this.tools,
+                reasoning_effort: null
             });
             const initialMessage = initial.choices[0].message;
             reviewSummary = await this.handleMessageResponse(initialMessage, reviewState);
