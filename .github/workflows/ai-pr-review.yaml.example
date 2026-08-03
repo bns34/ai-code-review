@@ -1,0 +1,143 @@
+name: AI PR review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '**/*.c'
+      - '**/*.cc'
+      - '**/*.cpp'
+      - '**/*.cs'
+      - '**/*.go'
+      - '**/*.h'
+      - '**/*.java'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.php'
+      - '**/*.py'
+      - '**/*.rb'
+      - '**/*.rs'
+      - '**/*.swift'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '!docs/**'
+      - '!**/*.md'
+      - '!**/*.txt'
+      - '!**/node_modules/**'
+      - '!**/vendor/**'
+      - '!**/dist/**'
+      - '!**/build/**'
+      - '!**/test/**'
+      - '!**/tests/**'
+
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number'
+        required: true
+        type: number
+      review_mode:
+        description: 'Review scope'
+        required: true
+        default: incremental
+        type: choice
+        options:
+          - incremental
+          - full
+      model:
+        description: 'AI model'
+        required: true
+        default: deepseek-v4-pro
+        type: choice
+        options:
+          - deepseek-v4-flash
+          - deepseek-v4-pro
+          - gpt-5.6-luna
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-review-pr-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: AI code review
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Select review configuration
+        id: config
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          PR_ADDITIONS: ${{ github.event.pull_request.additions || 0 }}
+          PR_DELETIONS: ${{ github.event.pull_request.deletions || 0 }}
+          MANUAL_MODEL: ${{ inputs.model }}
+          MANUAL_MODE: ${{ inputs.review_mode }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            model="$MANUAL_MODEL"
+            mode="$MANUAL_MODE"
+          else
+            changed_lines=$((PR_ADDITIONS + PR_DELETIONS))
+            if (( changed_lines <= 300 )); then
+              model="deepseek-v4-flash"
+            elif (( changed_lines <= 1000 )); then
+              model="deepseek-v4-pro"
+            else
+              model="gpt-5.6-luna"
+            fi
+
+            # The first review of a PR should be full. Later pushes are incremental.
+            if [[ "$ACTION" == "opened" || "$ACTION" == "reopened" || "$ACTION" == "ready_for_review" ]]; then
+              mode="full"
+            else
+              mode="incremental"
+            fi
+          fi
+
+          if [[ "$model" == gpt-* ]]; then
+            provider="openai"
+          else
+            provider="deepseek"
+          fi
+
+          if [[ "$mode" == "full" ]]; then
+            bypass_incremental="true"
+          else
+            bypass_incremental="false"
+          fi
+
+          echo "model=$model" >> "$GITHUB_OUTPUT"
+          echo "provider=$provider" >> "$GITHUB_OUTPUT"
+          echo "bypass_incremental=$bypass_incremental" >> "$GITHUB_OUTPUT"
+          echo "Selected $provider / $model / $mode review"
+
+      - name: Run AI review
+        uses: bns34/ai-code-review@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+
+          ai_provider: ${{ steps.config.outputs.provider }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          openai_model: ${{ steps.config.outputs.model }}
+          deepseek_api_key: ${{ secrets.DEEPSEEK_API_KEY }}
+          deepseek_model: ${{ steps.config.outputs.model }}
+
+          bypass_incremental: ${{ steps.config.outputs.bypass_incremental }}
+          exclude_paths: 'docs/,test/,tests/,vendor/,node_modules/,dist/,build/'
+          fail_action_if_review_failed: 'true'
