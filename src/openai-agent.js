@@ -195,7 +195,7 @@ class OpenAIAgent extends BaseAIAgent {
                             ...reviewState.messageHistory
                         ],
                         tools: this.tools,
-                        reasoning_effort: null
+                        reasoning_effort: "none"
                     });
                     message = followUp.choices[0].message; // continue loop
                     continue;
@@ -264,7 +264,7 @@ class OpenAIAgent extends BaseAIAgent {
                     ...reviewState.messageHistory
                 ],
                 tools: this.tools,
-                reasoning_effort: null
+                reasoning_effort: "none"
             });
             const initialMessage = initial.choices[0].message;
             reviewSummary = await this.handleMessageResponse(initialMessage, reviewState);
