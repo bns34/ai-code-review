@@ -79,6 +79,10 @@ inputs:
     description: 'If set to true, the action fails when the review process fails'
     required: false
     default: 'false'
+  bypass_incremental:
+    description: 'When true, review the entire PR; when false (default), only review changes since the last AI review comment.'
+    required: false
+    default: 'false'
   review_rules_file:
     description: 'Path to a file containing custom review rules to be added to the AI system prompt.'
     required: false
