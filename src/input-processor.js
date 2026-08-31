@@ -10,6 +10,7 @@ const GoogleAgent = require("./google-agent");
 const DeepseekAgent = require("./deepseek-agent");
 const XAgent = require("./x-agent");
 const PerplexityAgent = require("./perplexity-agent");
+const OpenRouterAgent = require("./openrouter-agent");
 const { AI_REVIEW_COMMENT_PREFIX, SUMMARY_SEPARATOR, FULL_REVIEW_PREFIX, INCREMENTAL_REVIEW_PREFIX } = require("./constants");
 
 /* -------------------------------------------------------------------------- */
@@ -188,7 +189,7 @@ class InputProcessor {
             throw new Error(`${this._aiProvider} API key is required.`);
         }
 
-        const supportedProviders = ["openai", "anthropic", "google", "deepseek", "x", "perplexity"];
+        const supportedProviders = ["openai", "anthropic", "google", "deepseek", "x", "perplexity", "openrouter"];
         if (!supportedProviders.includes(this._aiProvider)) {
             throw new Error(`Unsupported AI provider: ${this._aiProvider}. Supported providers: ${supportedProviders.join(", ")}`);
         }
@@ -318,6 +319,8 @@ class InputProcessor {
                 return new XAgent(this._apiKey, this._fileContentGetter, this._fileCommentator, this._model, this._reviewRulesContent);
             case "perplexity":
                 return new PerplexityAgent(this._apiKey, this._fileContentGetter, this._fileCommentator, this._model, this._reviewRulesContent);
+            case "openrouter":
+                return new OpenRouterAgent(this._apiKey, this._fileContentGetter, this._fileCommentator, this._model, this._reviewRulesContent);
             default:
                 throw new Error(`Unsupported AI provider: ${this._aiProvider}`);
         }
