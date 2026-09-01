@@ -301,6 +301,7 @@ class OpenAIAgent extends BaseAIAgent {
         );
     }
 
+    // Only really relevant when this is being used for OpenRouter
     getReasoningOptions() {
         if (this.model === "openai/gpt-5.6-luna") {
             return { reasoning_effort: "none" }; // Luna doesn't support reasoning here for some reason
