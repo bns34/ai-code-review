@@ -195,7 +195,7 @@ class OpenAIAgent extends BaseAIAgent {
                             ...reviewState.messageHistory
                         ],
                         tools: this.tools,
-                        reasoning_effort: "none"
+                        ...this.getReasoningOptions()
                     });
                     message = followUp.choices[0].message; // continue loop
                     continue;
@@ -264,7 +264,7 @@ class OpenAIAgent extends BaseAIAgent {
                     ...reviewState.messageHistory
                 ],
                 tools: this.tools,
-                reasoning_effort: "none"
+                ...this.getReasoningOptions()
             });
             const initialMessage = initial.choices[0].message;
             reviewSummary = await this.handleMessageResponse(initialMessage, reviewState);
@@ -300,6 +300,23 @@ class OpenAIAgent extends BaseAIAgent {
             side
         );
     }
+
+    getReasoningOptions() {
+        if (this.model === "openai/gpt-5.6-luna") {
+            return { reasoning_effort: "none" }; // Luna doesn't support reasoning here for some reason
+        }
+
+        if (
+            this.model.startsWith("deepseek/") ||
+            this.model.startsWith("google/gemini-") ||
+            this.model.startsWith("anthropic/")
+        ) {
+            return { reasoning_effort: "low" }; // Models like gemini-3.7-flash requires reasoning
+        }
+
+        return {};
+    }
+
 }
 
 module.exports = OpenAIAgent;
