@@ -307,8 +307,11 @@ class OpenAIAgent extends BaseAIAgent {
             return { reasoning_effort: "none" }; // Luna doesn't support reasoning here for some reason
         }
 
+        if (this.model === "deepseek/") {
+            return { reasoning: { effort: "none" } }; // Reasoning may be causing long processing time issue
+        }
+
         if (
-            this.model.startsWith("deepseek/") ||
             this.model.startsWith("google/gemini-") ||
             this.model.startsWith("anthropic/")
         ) {
