@@ -257,6 +257,10 @@ class OpenAIAgent extends BaseAIAgent {
 
         try {
             core.info(`Sending initial request to OpenAI with model: ${this.model}`);
+
+            const reasoningOptions = this.getReasoningOptions();
+            core.info(`Reasoning options: ${JSON.stringify(reasoningOptions)}`);
+
             const initial = await this.openai.chat.completions.create({
                 model: this.model,
                 messages: [
@@ -307,8 +311,8 @@ class OpenAIAgent extends BaseAIAgent {
             return { reasoning_effort: "none" }; // Luna doesn't support reasoning here for some reason
         }
 
-        if (this.model === "deepseek/") {
-            return { reasoning: { effort: "none" } }; // Reasoning may be causing long processing time issue
+        if (this.model.startsWith("deepseek/")) {
+            return { reasoning: { enabled: false } }; // Reasoning may be causing long processing time issue
         }
 
         if (
